@@ -3,7 +3,7 @@
   "description": "SoundCloud radio",
   "version": "0.0.1",
   "private": true,
-  "main":"src/js/server",
+  "main":"src/importer",
   "devDependencies": {
     "grunt-newer":"0.7.0",
     "grunt":"~0.4.2",
