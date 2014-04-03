@@ -1,0 +1,1 @@
+module.exports = require('./import_tracks_from_artist');

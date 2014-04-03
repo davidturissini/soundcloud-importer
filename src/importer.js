@@ -1,0 +1,1 @@
+exports.import = require('./import_edge');
