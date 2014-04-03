@@ -1,5 +1,5 @@
 {
-  "name": "Soundcloud importer",
+  "name": "soundcloud-importer",
   "description": "SoundCloud radio",
   "version": "0.0.1",
   "private": true,
