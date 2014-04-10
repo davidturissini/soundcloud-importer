@@ -6,6 +6,7 @@ function AdjacentArtists (mainArtist, artists) {
 	this._mainArtist = mainArtist;
 	this._artists = artists;
 	this._count = null;
+	this._sorted = null;
 	this._blacklist = [
 		'flux-pavilion',
 		'skrillex',
@@ -22,7 +23,7 @@ AdjacentArtists.prototype = {
 	},
 
 
-	sort: function () {
+	sortArtists: function () {
 		if (this._sorted !== null) {
 			return this._sorted;
 		}
@@ -35,14 +36,17 @@ AdjacentArtists.prototype = {
 			}
 		}
 
+
 		this._sorted = followingsArray;
+
 		return this._sorted;
 	},
 
 
 	getCluster: function (edgeLimit) {
 		edgeLimit = edgeLimit || 40;
-		var followingsArray = this.sort();
+		var followingsArray = this.sortArtists();
+		
 		var popularThreshold = 50000;
 		var minTrackCount = 5;
 
@@ -95,7 +99,6 @@ AdjacentArtists.prototype = {
 				intersection = clusters[clusterIndex];
 			}
 		}
-		
 
 		var spliced;
 		spliced = _.uniq(intersection).splice(0, edgeLimit);

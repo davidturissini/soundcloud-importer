@@ -114,7 +114,6 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 				var map = followings.map(handleArtistCreate);
 				map = _.compact(map);
 
-
 				for(var i = 0; i < map.length; i += 1) {
 					if (followingsDictionary[map[i].permalink] === undefined) {
 						followingsDictionary[map[i].permalink] = {
@@ -126,6 +125,7 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 
 					followingsDictionary[map[i].permalink].count += 1;
 					followingsDictionary[map[i].permalink].where.push(this.permalink);
+
 				}
 	
 			}
@@ -161,6 +161,7 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 
 				.then(function () {
 					console.log('should have made', numRequests, 'requests');
+					
 					return new AdjacentArtists(artist, followingsDictionary);
 				});
 
