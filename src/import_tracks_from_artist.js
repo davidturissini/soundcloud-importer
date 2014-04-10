@@ -21,6 +21,8 @@ function artistAdjacentArtistsReady (edgeLimit, artistPermalink, adjacentArtists
 					if (artist.permalink === track.user.permalink) {
 						ranking = (edgeLimit - index);
 					}
+
+					track.ranking = ranking;
 				});
 
 				foundTracks.push(track);
@@ -35,17 +37,18 @@ function artistAdjacentArtistsReady (edgeLimit, artistPermalink, adjacentArtists
 
 
 function importTracksFromArtist (artistPermalink, edgeLimit) {
+	edgeLimit = edgeLimit || 50;
 	var totalFollowings = [];
 	var numFetched = 0;
 	var artist;
 	var importedArtists;
+	var time = new Date().getTime();
 
 
 	return soundcloud.api('/users/' + artistPermalink)
 
 		.then(function (artistData) {
 			artist = new Artist(artistData);
-			console.log(artist);
 		})
 
 		.then(function () {
@@ -55,6 +58,11 @@ function importTracksFromArtist (artistPermalink, edgeLimit) {
 		})
 
 		.then(artistAdjacentArtistsReady.bind(undefined, edgeLimit, artistPermalink))
+
+		.then(function (a) {
+			console.log('time:', new Date().getTime() - time);
+			return a;
+		})
 
 		.fail(function (e) {
 			console.log(e.stack);

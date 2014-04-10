@@ -18,48 +18,31 @@ AdjacentArtists.prototype = {
 
 	add: function (artist) {
 		this._artists.push(artist);
-		this._count = null;
+		this._sorted = null;
 	},
 
 
-	countAndSort: function () {
-		if (this._count !== null) {
-			return this._count;
+	sort: function () {
+		if (this._sorted !== null) {
+			return this._sorted;
 		}
 
 		var followingsArray = [];
-		var followingsDictionary = {};
-
-		console.log('counting artists');
-		console.log(this._artists.length);
-		this._artists.forEach(function (artist) {
-			var permalink = artist.permalink;
-			if (typeof followingsDictionary[permalink] === 'undefined') {
-				followingsDictionary[permalink] = {
-					count:1,
-					artist:artist
-				};
-			} else {
-				followingsDictionary[permalink].count += 1;
-			}
-
-		});
-
 		
-		for(var permalink in followingsDictionary) {
-			if (followingsDictionary.hasOwnProperty(permalink) && followingsDictionary[permalink].artist.track_count !== 0) {
-				followingsArray.push(followingsDictionary[permalink]);
+		for(var permalink in this._artists) {
+			if (this._artists.hasOwnProperty(permalink) && this._artists[permalink].artist.track_count !== 0) {
+				followingsArray.push(this._artists[permalink]);
 			}
 		}
 
-		this._count = followingsArray;
-		return this._count;
+		this._sorted = followingsArray;
+		return this._sorted;
 	},
 
 
 	getCluster: function (edgeLimit) {
 		edgeLimit = edgeLimit || 40;
-		var followingsArray = this.countAndSort();
+		var followingsArray = this.sort();
 		var popularThreshold = 50000;
 		var minTrackCount = 5;
 

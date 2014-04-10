@@ -4,6 +4,7 @@ var _ = require('underscore');
 var Track = require('./Track');
 var AdjacentArtists = require('./../collection/AdjacentArtists');
 var Artists = require('./../collection/Artists');
+var RequestQueue = require('./../util/RequestQueue');
 
 
 
@@ -89,17 +90,16 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 	options = _.extend({select:[]}, options || {});
 	console.log('fetching ' + this.permalink);
 	var artist = this;
-	var limit = this.followers_count > 500 ? 500 : this.followers_count;
+	var max = 500;
+	var limit = this.followers_count > max ? max : this.followers_count;
 	var thisPermalink = this.permalink;
+
 	return soundcloud.joinPaginated('/users/' + this.permalink + '/followers', 199, limit)
 		.then(function (followers) {
-			var totalFollowings = [];
-			var artistPromises = [];
 			var queue = [];
 			var defer = q.defer();
-			var numFollowers = followers.length;
-			var numFetched = 0;
-
+			var requestQueue;
+			var followingsDictionary = {};
 
 			function handleArtistCreate (artistData) {
 				if (artistData.permalink === thisPermalink) {
@@ -112,48 +112,56 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 			function handleFollowings (followings) {
 				
 				var map = followings.map(handleArtistCreate);
-
 				map = _.compact(map);
 
-				totalFollowings = totalFollowings.concat(map);
 
+				for(var i = 0; i < map.length; i += 1) {
+					if (followingsDictionary[map[i].permalink] === undefined) {
+						followingsDictionary[map[i].permalink] = {
+							artist:map[i],
+							count:0,
+							where:[]
+						}
+					}
 
+					followingsDictionary[map[i].permalink].count += 1;
+					followingsDictionary[map[i].permalink].where.push(this.permalink);
+				}
+	
 			}
 
+			var numRequests = 0;
 			function eachFollower (follower) {
-				console.log('fetching', follower.permalink, 'followings.', follower.followings_count, 'found');
-				var promise = soundcloud.joinPaginated('/users/' + follower.permalink + '/followings', 199, follower.followings_count);
+				var boundHandleFollowings = handleFollowings.bind(follower);
+				numRequests += Math.ceil(follower.followings_count / 199);
+				//console.log('fetching', follower.permalink, 'followings.', follower.followings_count, 'found');
 
-				return promise.then(handleFollowings);
-			}
+				var promises = soundcloud.joinPaginatedPromises('/users/' + follower.permalink + '/followings', 199, follower.followings_count);
+				var first = promises.shift();
 
-
-			while(followers.length > 0) {
-				(function (splicedFollowers) {
-
-					queue.push(function () {
-						var promises = splicedFollowers.map(eachFollower);
-						return q.all(promises);
+				promises.forEach(function (promise, index) {
+					requestQueue.add(function () {
+						return promise().then(boundHandleFollowings);
 					});
+				});
 
-				})(followers.splice(0, 20))
-				
+				return first().then(boundHandleFollowings);
 			}
 
-
-			var defer = q.defer();
-			var result = defer.promise;
-			defer.resolve();
-			
-			queue.forEach(function (f) {
-			    result = result.then(f);
-			});
+			followers.forEach(function (follower) {
+				queue.push(eachFollower.bind(undefined, follower));
+			})
 
 
-			return result
+			requestQueue = new RequestQueue(queue, 200);
+			requestQueue.on('done', defer.resolve.bind(defer));
+			requestQueue.start();
+
+			return defer.promise
 
 				.then(function () {
-					return new AdjacentArtists(artist, totalFollowings);
+					console.log('should have made', numRequests, 'requests');
+					return new AdjacentArtists(artist, followingsDictionary);
 				});
 
 		});

@@ -1,1 +1,1 @@
-exports.import = require('./import_edge');
+exports.import = require('./import_tracks_from_artist');
