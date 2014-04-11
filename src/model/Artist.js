@@ -7,7 +7,6 @@ var Artists = require('./../collection/Artists');
 var RequestQueue = require('./../util/RequestQueue');
 
 
-
 var Artist = function (params) {
 
 	for(var x in params) {
@@ -18,36 +17,6 @@ var Artist = function (params) {
 
 };
 
-
-Artist.createIfNotExists = function (artistData) {
-
-	var query = Artist.findOne({
-		permalink:artistData.permalink
-	});
-
-	return query.exec()
-		.then(function (artist) {
-			var defer;
-
-			if (artist) {
-				return artist;
-			}
-
-			defer = Q.defer();
-
-			artist = new Artist(artistData);
-
-			console.log('saving artist', artist.permalink);
-			artist.save(function () {
-				console.log('artist saved', artist.permalink);
-				defer.resolve();
-			});
-
-			return defer.promise;
-
-		});
-
-}
 
 Artist.prototype.soundcloudGetTracks = function () {
 	
@@ -69,22 +38,6 @@ Artist.prototype.soundcloudGetTracks = function () {
 		});
 };
 
-
-Artist.create = function (artistData, options) {
-	var params = {};
-	options = options || {};
-	
-
-	if (options.select.length === 0) {
-		params = artistData;
-	} else {
-		options.select.forEach(function (prop) {
-			params[prop] = artistData[prop];
-		});
-	}
-
-	return new Artist(params);
-}
 
 Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 	options = _.extend({select:[]}, options || {});
@@ -134,7 +87,6 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 			function eachFollower (follower) {
 				var boundHandleFollowings = handleFollowings.bind(follower);
 				numRequests += Math.ceil(follower.followings_count / 199);
-				//console.log('fetching', follower.permalink, 'followings.', follower.followings_count, 'found');
 
 				var promises = soundcloud.joinPaginatedPromises('/users/' + follower.permalink + '/followings', 199, follower.followings_count);
 				var first = promises.shift();
@@ -160,8 +112,6 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 			return defer.promise
 
 				.then(function () {
-					console.log('should have made', numRequests, 'requests');
-					
 					return new AdjacentArtists(artist, followingsDictionary);
 				});
 
@@ -169,106 +119,20 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 }
 
 
-Artist.prototype.soundcloudGetTracksAndFavorites = function () {
-	console.log('fetching tracks for', this.permalink);
-	return this.soundcloudGetTracks()
-
-		.then(function (tracks) {
-			console.log('fetching favorites for', this.permalink);
-			return this.soundcloudGetFavorites()
-				.then(function (favorites) {
-					return tracks.concat(favorites);
-				});
-		}.bind(this));
-};
-
-Artist.prototype.soundcloudGetFavorites = function () {
-	var artist = this;
-
-	return soundcloud.api('/users/' + this.permalink + '/favorites')
-		.then(function (favorites) {
-			
-			var tracks = [];
-
-			favorites.forEach(function (favorite) {
-				tracks.push(new Track(favorite));
-			});
-
-			return tracks;
-			
-		});
-		
-}
-
-Artist.prototype.soundcloudGetFollowings = function () {
-	
-	return soundcloud.joinPaginated('/users/' + this.permalink + '/followings', 199, this.followings_count)
-		.then(function (followings) {
-			var artistsArray = _.map(followings, function (artist) {
-				return new Artist(artist);
-			});
-
-			return new Artists(artistsArray);
-
-		});
-}
+Artist.create = function (artistData, options) {
+	var params = {};
+	options = options || {};
 
 
-Artist.prototype.populateTracks = function () {
-	var defer = Q.defer();
-
-	if (this.tracks.length === 0) {
-		defer.resolve(this.tracks);
+	if (options.select.length === 0) {
+	    params = artistData;
 	} else {
-		this.populate('tracks', function () {
-			defer.resolve(this.tracks);
-		}.bind(this));
+	    options.select.forEach(function (prop) {
+	         params[prop] = artistData[prop];
+	    });
 	}
 
-	return defer.promise;
-}
-
-Artist.prototype.hasTrack = function (track) {
-	var hasTrack = false;
-	
-	var incomingTrackPermalinkUrl = (track.permalink === undefined) ? track : track.permalink;
-
-
-	this.tracks.forEach(function (track) {
-		if (track.permalink === incomingTrackPermalinkUrl) {
-			hasTrack = true;
-		}
-	});
-
-	return hasTrack;
-
-};
-
-Artist.prototype.hasFollower = function (follower) {
-	var hasFollower = false;
-	var incomingFollowerPermalinkUrl = (follower.permalink === undefined) ? follower : follower.permalink;
-
-
-	this.followers.forEach(function (follower) {
-		if (follower.permalink === incomingFollowerPermalinkUrl) {
-			hasFollower = true;
-		}
-	});
-
-	return hasFollower;
-}
-
-Artist.prototype.hasFollowing = function (following) {
-	var hasFollower = false;
-	var incomingFollowerPermalinkUrl = (following.permalink === undefined) ? following : following.permalink;
-
-	this.followings.forEach(function (following) {
-		if (following.permalink === incomingFollowerPermalinkUrl) {
-			hasFollower = true;
-		}
-	});
-
-	return hasFollower;
+	return new Artist(params);
 }
 
 
