@@ -64,10 +64,10 @@ Artist.prototype.soundcloudGetAdjacentArtists = function (options) {
 
 			function handleFollowings (followings) {
 				// Check if we got an error from soundcloud
-				if (followings.error) {
+				if (typeof followings.map !== 'function') {
 					return;
 				}
-				
+
 				var map = followings.map(handleArtistCreate);
 				map = _.compact(map);
 
