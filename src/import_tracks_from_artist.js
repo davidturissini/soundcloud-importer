@@ -73,4 +73,5 @@ function importTracksFromArtist (artistPermalink, edgeLimit) {
 
 }
 
-module.exports = importTracksFromArtist;
+exports.importTracksFromArtist = importTracksFromArtist;
+exports.findAdjacentArtists = findAdjacentArtists;
