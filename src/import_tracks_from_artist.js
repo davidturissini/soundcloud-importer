@@ -6,8 +6,8 @@ soundcloud.configure({
 });
 
 
-function artistAdjacentArtistsReady (edgeLimit, artistPermalink, adjacentArtists) {
-	var artists = adjacentArtists.getCluster(edgeLimit);
+function artistAdjacentArtistsReady (edgeLimit, artists) {
+	
 	var queue = [];
 	var numExecuted = 0;
 	var foundTracks = [];
@@ -36,8 +36,11 @@ function artistAdjacentArtistsReady (edgeLimit, artistPermalink, adjacentArtists
 }
 
 
-function findAdjacentArtists (artistPermalink) {
+function findAdjacentArtists (artistPermalink, limit, select) {
 	var artist;
+	limit = limit || 50;
+	select = select || ['permalink', 'track_count', 'followers_count', 'followings_count'];
+
 	return soundcloud.api('/users/' + artistPermalink)
 
 		.then(function (artistData) {
@@ -46,8 +49,12 @@ function findAdjacentArtists (artistPermalink) {
 
 		.then(function () {
 			return artist.soundcloudGetAdjacentArtists({
-				select:['permalink', 'track_count', 'followers_count', 'followings_count']
+				select:select
 			});
+		})
+
+		.then(function (adjacentArtists) {
+			var artists = adjacentArtists.getCluster(limit);
 		})
 }
 
@@ -59,7 +66,9 @@ function importTracksFromArtist (artistPermalink, edgeLimit) {
 
 	return findAdjacentArtists(artistPermalink)
 
-		.then(artistAdjacentArtistsReady.bind(undefined, edgeLimit, artistPermalink))
+		.then(function (artists) {
+			return artistAdjacentArtistsReady(edgeLimit, artists);
+		})
 
 		.then(function (a) {
 			console.log('time:', new Date().getTime() - time);
