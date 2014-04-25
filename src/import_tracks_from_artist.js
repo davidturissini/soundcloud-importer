@@ -36,15 +36,8 @@ function artistAdjacentArtistsReady (edgeLimit, artistPermalink, adjacentArtists
 }
 
 
-function importTracksFromArtist (artistPermalink, edgeLimit) {
-	edgeLimit = edgeLimit || 50;
-	var totalFollowings = [];
-	var numFetched = 0;
+function findAdjacentArtists (artistPermalink) {
 	var artist;
-	var importedArtists;
-	var time = new Date().getTime();
-
-
 	return soundcloud.api('/users/' + artistPermalink)
 
 		.then(function (artistData) {
@@ -56,6 +49,15 @@ function importTracksFromArtist (artistPermalink, edgeLimit) {
 				select:['permalink', 'track_count', 'followers_count', 'followings_count']
 			});
 		})
+}
+
+
+function importTracksFromArtist (artistPermalink, edgeLimit) {
+	edgeLimit = edgeLimit || 50;
+	var time = new Date().getTime();
+
+
+	return findAdjacentArtists(artistPermalink)
 
 		.then(artistAdjacentArtistsReady.bind(undefined, edgeLimit, artistPermalink))
 
