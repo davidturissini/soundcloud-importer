@@ -7,7 +7,6 @@ soundcloud.configure({
 
 
 function artistAdjacentArtistsReady (edgeLimit, artists) {
-	
 	var queue = [];
 	var numExecuted = 0;
 	var foundTracks = [];
@@ -54,7 +53,7 @@ function findAdjacentArtists (artistPermalink, limit, select) {
 		})
 
 		.then(function (adjacentArtists) {
-			var artists = adjacentArtists.getCluster(limit);
+			return adjacentArtists.getCluster(limit);
 		})
 }
 
